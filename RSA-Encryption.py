@@ -1,10 +1,11 @@
 import random
+import math
 
 # Checks if number is prime
 def is_prime(n):
     if n<= 1:
         return False
-    for i in range(2,int(n*.5)+1):
+    for i in range(2,math.sqrt(n)):
         if n%i==0:
             return False
     return True
@@ -27,33 +28,38 @@ def modulo_inverse(e,phi):
     g, x, y = extended_euclidean_function(e,phi)
     if g!=1:
         print("no modulo inverse")
+        return
     return x%phi
 
-def RSA_encryption(message):
+def RSA(message):
     p=0
     q=0
     while True:
-        p=randomint(10**100,int('inf'))
-        q=randomint(10**100,int('inf'))
+        p=random.randint(10**100, 10**1000)
+        q=random.randint(10**100, 10**1000)
         if(is_prime(p) and is_prime(q)):
             break
-    print("p: " + p)
-    print("q: " + q)
 
     n=p*q
-    print("n: " + n)
 
     phi=euler_totient_function(p,q)
-    print("phi: " + phi)
 
-    e=3
+    e=65537
     d=modulo_inverse(e, phi)
-    print("d: " + d)
 
     private=(e,n)
     public=(d,n)
 
-    encrypted_message_private=(int(message)^e)%n
-    encrypted_message_public=(int(message)^d)%n
+    encrypted_message=pow(int(message),e,n)
+    print(f"encrypted message: {encrypted_message}")
 
-    return encrypted_message_private, encrypted_message_public
+    decrypted_message=pow(int(encrypted_message),d,n)
+    print(f"decrypted message: {decrypted_message}")
+
+    return encrypted_message, decrypted_message
+
+def main():
+    print(RSA("hello there"))
+
+if __name__ =="__main__":
+    main()
