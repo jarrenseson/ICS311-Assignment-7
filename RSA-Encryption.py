@@ -1,5 +1,4 @@
 import random
-import math
 
 # Checks if number is prime
 def miller_rabin(n, k=5):
@@ -70,11 +69,17 @@ def RSA(message):
     decrypted_int_message=pow(int(encrypted_message),d,n)
     decrypted_message=''.join([chr(int(str(decrypted_int_message)[i:i+3])) for i in range(0,len(str(decrypted_int_message)), 3)])
     print(f"decrypted message: {decrypted_message}")
+    print("=" * 50)
 
     return encrypted_message, decrypted_message
 
 def main():
     RSA("hello there")
+    RSA("Hello there")
+    RSA("hELLO THERE")
+    RSA("HELLO THERE")
+    RSA("heLlO ThErE")
+    RSA("HeLlO ThErE")
 
 if __name__ =="__main__":
     main()
