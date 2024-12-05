@@ -43,12 +43,12 @@ def modulo_inverse(e,phi):
         raise ValueError("no modulo inverse")
     return x%phi
 
-def RSA(message):
+def generate_keys():
     p=0
     q=0
     while True:
-        p=random.randint(10**100, 10**200)
-        q=random.randint(10**100, 10**200)
+        p=random.randint(10**10, 10**20)
+        q=random.randint(10**10, 10**20)
         if(miller_rabin(p) and miller_rabin(q)):
             break
 
@@ -59,27 +59,30 @@ def RSA(message):
     e=65537
     d=modulo_inverse(e, phi)
 
-    private=(e,n)
-    public=(d,n)
-    int_message=int(''.join([str(ord(char)).zfill(3) for char in message]))
+    private_key=(e,n)
+    public_key=(d,n)
 
-    encrypted_message=pow(int_message, e, n)
-    print(f"encrypted message: {encrypted_message}")
+    return public_key, private_key
 
-    decrypted_int_message=pow(int(encrypted_message),d,n)
-    decrypted_message=''.join([chr(int(str(decrypted_int_message)[i:i+3])) for i in range(0,len(str(decrypted_int_message)), 3)])
-    print(f"decrypted message: {decrypted_message}")
-    print("=" * 50)
 
-    return encrypted_message, decrypted_message
+def rsa_encrypt(message, public_key):
+    message_bytes = message.encode()
+    int_message = int.from_bytes(message_bytes, byteorder="big")
+    if int_message >= public_key[1]:
+        raise ValueError("message is too long")
+    encrypted_message = pow(int_message, public_key[0], public_key[1])
 
+    return encrypted_message
+
+def rsa_decrypt(encrypted_message, private_key):
+    decrypted_int_message = pow(encrypted_message, *private_key)
+    decrypted_bytes = decrypted_int_message.to_bytes((decrypted_int_message.bit_length() + 7) // 8, byteorder="big")
+    decrypted_message = decrypted_bytes.decode()
+    
+    return decrypted_message
 def main():
-    RSA("hello there")
-    RSA("Hello there")
-    RSA("hELLO THERE")
-    RSA("HELLO THERE")
-    RSA("heLlO ThErE")
-    RSA("HeLlO ThErE")
+    public_key, private_key = generate_keys()
+    rsa_decrypt(rsa_encrypt("HEllo there", public_key), private_key)
 
 if __name__ =="__main__":
     main()
