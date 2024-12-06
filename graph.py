@@ -1,4 +1,5 @@
 from my_rsa import generate_keys, rsa_decrypt, rsa_encrypt
+from run_length_encoding import run_length_encode
 
 class message:
     def __init__(self, sender, receiver, body, metadata=None):
@@ -50,6 +51,24 @@ class graph:
         self.nodes[person.identity].inbox[0].body = rsa_decrypt(self.nodes[person.identity].inbox[0].body, self.nodes[person.identity].private_key)
         print(f"{self.nodes[person.identity].inbox[0]}")
 
+    # Sends a compressed message from a sender to a receiver using Run-Length Encoding (RLE).
+    def send_compressed_message(self, sender, receiver, uncompressed_message):
+        # Validation of sender and receiver
+        if sender.identity not in self.nodes or receiver.identity not in self.nodes:
+            raise ValueError("Sender or receiver not in graph.")
+
+        # Compress the message body
+        compressed_message = run_length_encode(uncompressed_message)
+
+        # Create metadata indicating the message is compressed
+        metadata = {"compression": "RLE", "original_length": len(uncompressed_message)}
+
+        # Create and send the message
+        compressed_msg = message(sender, receiver, compressed_message, metadata)
+        self.nodes[receiver.identity].inbox.append(compressed_msg)
+
+        print(f"Compressed message sent from {sender.identity} to {receiver.identity}.")
+
 def main():
     network = graph()
 
@@ -61,6 +80,16 @@ def main():
 
     network.send_rsa_message(person1, person2, "Hellooooooo")
     network.read_rsa_message(person2)
+
+    print("------------------------------Test for send compressed Message-----------------------------")
+
+    #testing for run_length_encoding
+    # Send a compressed message
+    network.send_compressed_message(person1, person2, "aaaabbbccd")
+
+    # Check the receiver's inbox
+    for msg in person2.inbox:
+        print(msg)
 
 if __name__=="__main__":
     main()
