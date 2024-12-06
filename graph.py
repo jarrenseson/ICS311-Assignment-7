@@ -49,18 +49,21 @@ class graph:
             raise ValueError("person not in graph")
         self.nodes[person.identity].inbox[0].body = rsa_decrypt(self.nodes[person.identity].inbox[0].body, self.nodes[person.identity].private_key)
         print(f"{self.nodes[person.identity].inbox[0]}")
+        del self.nodes[person.identity].inbox[0]
 
 def main():
     network = graph()
 
     person1=person("alex")
     person2=person("grace")
+    person3=person("ben")
 
     network.add_person(person1)
     network.add_person(person2)
 
-    network.send_rsa_message(person1, person2, "Hellooooooo")
+    network.send_rsa_message(person1, person2, "Hellooooooo!")
     network.read_rsa_message(person2)
+    network.send_rsa_message(person3, person2, "hehe")
 
 if __name__=="__main__":
     main()
