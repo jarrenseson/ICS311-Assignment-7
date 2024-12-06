@@ -73,7 +73,7 @@ def rsa_encrypt(message, public_key):
     return encrypted_message
 
 def rsa_decrypt(encrypted_message, private_key):
-    decrypted_int_message = pow(encrypted_message, private_key)
+    decrypted_int_message = pow(encrypted_message, *private_key)
     decrypted_bytes = decrypted_int_message.to_bytes((decrypted_int_message.bit_length() + 7) // 8, byteorder="big")
     decrypted_message = decrypted_bytes.decode()
     
