@@ -1,5 +1,6 @@
 from my_rsa import generate_keys, rsa_decrypt, rsa_encrypt
 from run_length_encoding import run_length_encode
+from lossy_compression import FFTTransform
 
 class message:
     def __init__(self, sender, receiver, body, metadata=None):
@@ -70,6 +71,37 @@ class graph:
 
         print(f"Compressed message sent from {sender.identity} to {receiver.identity}.")
 
+    # Sends a lossy compressed message from sender to reciever using FFT
+    def send_fft_message(self, sender, receiver, uncompressed_message, compression_level, metadata=None):
+        if sender.identity not in self.nodes or receiver.identity not in self.nodes:
+            raise ValueError("sender or receiver not in graph.")
+
+        # Use FFTTransform to compress the message
+        compressed_body, transformed_coefficients = FFTTransform.compress_message(uncompressed_message, compression_level)
+
+        # Create metadata
+        final_metadata = metadata or {}
+        final_metadata['compression'] = 'fft'
+        final_metadata['original_length'] = len(uncompressed_message)
+        final_metadata['compression_level'] = compression_level
+        final_metadata['coefficients'] = transformed_coefficients.tolist()
+
+        # Send the message
+        final_message = message(sender, receiver, compressed_body, final_metadata)
+        self.nodes[receiver.identity].inbox.append(final_message)
+
+    # Reads lossy compressed message
+    def read_fft_message(self, person):
+        if person.identity not in self.nodes:
+            raise ValueError("person not in graph")
+
+        # Read and reconstruct the first message in the inbox
+        message_to_read = self.nodes[person.identity].inbox[0]
+        transformed_coefficients = np.array(message_to_read.metadata['coefficients'], dtype=np.complex128)
+        decompressed_body = FFTTransform.decompress_message(message_to_read.body, transformed_coefficients)
+
+        print(f"Decompressed message: {decompressed_body}")
+
 def main():
     network = graph()
 
@@ -93,6 +125,14 @@ def main():
     # Check the receiver's inbox
     for msg in person2.inbox:
         print(msg)
+
+    print("------------------------------Test for lossy compressed message-----------------------------")
+
+    # Send an FFT-compressed message
+    network.send_fft_message(person1, person2, "Hellooooooo, how are you?", compression_level = 5)
+    
+    # Receiver reads the message
+    network.read_fft_message(person2)
 
 if __name__=="__main__":
     main()
