@@ -1,87 +1,102 @@
-import hashlib
 import random
 
-# Generate RSA Keys
-def generate_RSA_keys():
-    p, q = random_prime_number() # Generate random prime numbers
-    n = p * q # Calculate n
-    phi = (p-1)*(q-1) # Calculate phi
-    e = 17 # Public exponent
-    while gcd(e, phi) != 1:
-        e = random.randint(2, phi - 1)
-    
-    d = pow(e, -1, phi) # Private exponent, modular inverse of e and phi
-
-    print(f"Generated keys: Public key (e={e}, n={n}), Private key (d={d}, n={n})")
-    return (e, n), (d, n) # Return public and private keys
-
-# Function to generate random prime number
-def random_prime_number():
-    p = random.randint(10**12, 10**13) # Random number between 10^10 and 10^11
-    q = random.randint(10**12, 10**13) # Random number between 10^10 and 10^11
-
-    while not is_prime(p): # If p is not prime, generate a new random number
-        p = random.randint(10**12, 10**13)
-    while not is_prime(q) or q == p: # If q is not prime or equal to p, generate a new random number
-        q = random.randint(10**12, 10**13)
-    return p, q
-
-# Function to check if number is prime
-def is_prime(n):
-    if n <= 1:
+# Checks if number is prime
+def is_prime(n, k=5):
+    if n == 2 or n == 3:
+        return True
+    if n == 1 or n % 2 == 0:
         return False
-    for i in range(2, int(n**.5) + 1):
-        if n % i == 0:
+    r, s = 0, n - 1
+    while s % 2 == 0:
+        r += 1
+        s //= 2
+    for _ in range(k):
+        a = random.randint(2, n - 2)
+        x = pow(a, s, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
             return False
     return True
 
-# GCD Function
-def gcd(a, b):
-    while b != 0:
-        a, b = b, a % b
-    return a
+# Generates n
+def create_phi(p, q):
+    phi=(p-1)*(q-1)
+    return phi
 
-# Function to hash message
-def hash_message(message):
-    if not isinstance(message, str):
-        message = str(message)
-    # Use SHA-1 instead of SHA-256
-    hashed = int(hashlib.sha1(message.encode()).hexdigest(), 16)
-    print(f"Hashed message (SHA-1): {hashed}")
-    return hashed
+# Generates d
+def extended_euclidean_function(e,phi):
+    if phi==0:
+        return e, 1, 0
+    g, x1, y1 = extended_euclidean_function(phi, e % phi)
+    x=y1
+    y=x1 - (e // phi) * y1
+    return g, x, y
+
+def modulo_inverse(e,phi):
+    g, x, y = extended_euclidean_function(e,phi)
+    if g!=1:
+        raise ValueError("no modulo inverse")
+    return x%phi
+
+def generate_keys():
+    while True:
+        p=random.randint(10**10, 10**20)
+        q=random.randint(10**10, 10**20)
+        if(is_prime(p) and is_prime(q)):
+            break
+
+    n=p*q
+
+    phi=create_phi(p,q)
+
+    e=65537
+    d=modulo_inverse(e, phi)
+
+    private_key=(e,n)
+    public_key=(d,n)
+
+    return public_key, private_key
 
 
 # Function to sign message
 def sign_message(message, private_key):
-    d, n = private_key
-    hashed = hash_message(message)
-    signature = pow(hashed, d, n)
-    print(f"Signed message: {signature}")
+    hashed = hash(message)
+    signature = pow(hashed, private_key[0], private_key[1])
     return signature
 
 # Function to verify signed message
 def verify_signed_message(message, signature, public_key):
-    e, n = public_key
-    hashed = hash_message(message)
-    decrypted_hash = pow(signature, e, n)
-
-    print(f"Original hash: {hashed}")
-    print(f"Decrypted hash: {decrypted_hash}")
+    hashed = hash(message)
+    decrypted_hash = pow(signature, public_key[0], public_key[1])
     return decrypted_hash == hashed
 
 # Main / Testing
 def main():
     # Generate RSA keys
-    public_key, private_key = generate_RSA_keys()
+    public_key, private_key = generate_keys()
     
     # Original message
     message = "This is a secret message."
+    print(f"Original Message: {message}")
     
     # Sign the message
     signature = sign_message(message, private_key)
     print(f"Signature: {signature}")
     
     # Verify the signed message
+    is_valid = verify_signed_message(message, signature, public_key)
+    print(f"Is the signature valid? {is_valid}")
+
+    # Tamper with the message
+    message = "This is a tampered message!"
+    print(f"Tampered Message: {message}")
+
+    # Verify the tampered message
     is_valid = verify_signed_message(message, signature, public_key)
     print(f"Is the signature valid? {is_valid}")
 
